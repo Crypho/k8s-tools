@@ -16,8 +16,8 @@ metadata:
 spec:
   initContainers:
     - name: wait-for-postgresql
-        image: crypho.azurecr.io/crypho/k8s-tools:1.0.0
-        args: wait-for-service postgresql
+      image: crypho.azurecr.io/crypho/k8s-tools:1.0.0
+      args: ["wait-for-service", "postgresql"]
   containers:
     - name: myapp-cotainer
       ...
