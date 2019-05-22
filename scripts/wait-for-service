@@ -19,7 +19,9 @@ while : ; do
 	curl --silent --cacert $cacert --header "Authorization: Bearer $token" \
 		https://kubernetes.default.svc/api/v1/namespaces/$namespace/endpoints/$service  > $tmpfile
         if [ "$(jq .status < $tmpfile)" = null ] ; then
-                if [ $(jq -r '.subsets[].addresses | length' < $tmpfile) -gt 0 ] ; then
+                if [ "$(jq .subsets < $tmpfile)" = null ] ; then
+                        echo No endpoints found
+                elif [ "$(jq -r '.subsets[].addresses | length' < $tmpfile)" -gt 0 ] ; then
                         exit 0
                 else
                         echo No active endpoints found
