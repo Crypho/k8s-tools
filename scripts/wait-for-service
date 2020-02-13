@@ -3,32 +3,33 @@
 set -e
 
 namespace=${NAMESPACE:-default}
-service="$1"
 
-if [ -z "$service" ] ; then
-        echo "Usage: $0 <service>" >&2
+if [ -z "$1" ] ; then
+        echo "Usage: $0 <service> [<service>]" >&2
         exit 1
 fi
 
 cacert="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 token="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
 
-echo Waiting for $service to have endpoints
-tmpfile=$(mktemp)
-while : ; do 
-	curl --silent --cacert $cacert --header "Authorization: Bearer $token" \
-		https://kubernetes.default.svc/api/v1/namespaces/$namespace/endpoints/$service  > $tmpfile
-        if [ "$(jq .status < $tmpfile)" = null ] ; then
-                if [ "$(jq .subsets < $tmpfile)" = null ] ; then
-                        echo No endpoints found
-                elif [ "$(jq -r '.subsets[].addresses | length' < $tmpfile)" -gt 0 ] ; then
-                        exit 0
-                else
-                        echo No active endpoints found
-                fi
-        else
-                echo Service has not been registered yet
-        fi
-        sleep 2
-done
+for service in "$@" ; do
+    echo Waiting for $service to have endpoints
+    tmpfile=$(mktemp)
+    while : ; do
+            curl --silent --cacert $cacert --header "Authorization: Bearer $token" \
+                    https://kubernetes.default.svc/api/v1/namespaces/$namespace/endpoints/$service  > $tmpfile
+            if [ "$(jq .status < $tmpfile)" = null ] ; then
+                    if [ "$(jq .subsets < $tmpfile)" = null ] ; then
+                            echo No endpoints found
+                    elif [ "$(jq -r '.subsets[].addresses | length' < $tmpfile)" -gt 0 ] ; then
+                            exit 0
+                    else
+                            echo No active endpoints found
+                    fi
+            else
+                    echo Service has not been registered yet
+            fi
+            sleep 2
+    done
+for
 
