@@ -31,5 +31,5 @@ for service in "$@" ; do
             fi
             sleep 2
     done
-for
+done
 
