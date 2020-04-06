@@ -1,0 +1,35 @@
+name: Release docker
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  IMAGE_NAME: k8s-tools
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: test
+    runs-on: ubuntu-latest
+
+    name: Publish release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build docker image
+        run: docker build -t image .
+
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: |
+          version=$(echo $GITHUB_REF | cut -d/ -f3)
+          IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          docker tag image $IMAGE_ID:$version
+          docker push $IMAGE_ID:$version
